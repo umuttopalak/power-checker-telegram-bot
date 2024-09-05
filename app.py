@@ -3,6 +3,7 @@ import os
 
 import requests
 from dotenv import load_dotenv
+from flask import Flask
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (Application, CommandHandler, ContextTypes,
                           ConversationHandler, MessageHandler, filters)
@@ -13,6 +14,13 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
+
+
+@app.route('/')
+def index():
+    return "Bot is running!"
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -52,6 +60,7 @@ async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     lastname = context.user_data['lastname']
     email = context.user_data['email']
     phone = context.user_data['phone']
+
     try:
         backend_url = os.environ.get('BACKEND_URL')
         payload = {
@@ -62,7 +71,8 @@ async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             'chat_id': chat_id
         }
         response = requests.post(backend_url, json=payload)
-        logger.info("url: %s, payload: %s, response: %s", backend_url, context.user_data, response)
+        logger.info("url: %s, payload: %s, response: %s",
+                    backend_url, context.user_data, response)
 
         if response.status_code == 200:
             await update.message.reply_text("Bilgileriniz başarıyla kaydedildi. Kısa süre içinde sizinle iletişime geçeceğiz.")
@@ -82,8 +92,8 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
-def main() -> None:
-    """Start the bot."""
+def run_bot():
+    """Telegram botu çalıştırır."""
     load_dotenv()
     TOKEN = os.environ.get("TOKEN")
 
@@ -107,4 +117,10 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    from threading import Thread
+
+    bot_thread = Thread(target=run_bot)
+    bot_thread.start()
+
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
