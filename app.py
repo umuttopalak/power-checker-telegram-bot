@@ -1,5 +1,6 @@
 import logging
 import os
+import threading
 
 import requests
 from dotenv import load_dotenv
@@ -10,11 +11,13 @@ from telegram.ext import (Application, CommandHandler, ContextTypes,
 
 NAME, SURNAME, EMAIL, PHONE = range(4)
 
+# Telegram bot için logging ayarları
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
+# Flask uygulaması (portu dinlemek için)
 app = Flask(__name__)
 
 
@@ -64,18 +67,23 @@ async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     try:
         backend_url = os.environ.get('BACKEND_URL')
         payload = {
-            'firstname': firstname,
-            'lastname': lastname,
-            'email': email,
-            'phone': phone,
-            'chat_id': chat_id
+            'first_name' : firstname,
+            'last_name' : lastname,
+            'email' : email,
+            'phone_number' : phone,
+            'chat_id' : str(chat_id),
+            'has_license' : False
         }
         response = requests.post(backend_url, json=payload)
         logger.info("url: %s, payload: %s, response: %s",
-                    backend_url, context.user_data, response)
+                    backend_url, payload, response)
 
-        if response.status_code == 200:
+        if response.status_code == 201:
             await update.message.reply_text("Bilgileriniz başarıyla kaydedildi. Kısa süre içinde sizinle iletişime geçeceğiz.")
+        elif response.status_code == 400:
+            await update.message.reply_text("Eksik bilgileriniz bulunmaktadır, lütfen tekrar başlayınız.")
+        elif response.status_code == 409:
+            await update.message.reply_text("kullanıcını kaydınız bulunmaktadır, lütfen bizimle iletişime geçiniz (admin@umuttopalak.com).")
         else:
             logger.error("Backend returned an error: %s", response)
             await update.message.reply_text("Bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.")
@@ -92,8 +100,14 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
-def run_bot():
-    """Telegram botu çalıştırır."""
+def run_flask():
+    """Flask sunucusunu başlatır."""
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+
+
+def main():
+    """Telegram botunu başlatır."""
     load_dotenv()
     TOKEN = os.environ.get("TOKEN")
 
@@ -113,14 +127,11 @@ def run_bot():
     application.add_handler(conv_handler)
     logger.info("Bot is running...")
 
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.start()
+
     application.run_polling()
 
 
 if __name__ == '__main__':
-    from threading import Thread
-
-    bot_thread = Thread(target=run_bot)
-    bot_thread.start()
-
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    main()
