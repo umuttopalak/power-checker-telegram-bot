@@ -1,6 +1,7 @@
 import logging
 import os
 import threading
+import time
 
 import requests
 from dotenv import load_dotenv
@@ -67,12 +68,12 @@ async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     try:
         backend_url = os.environ.get('BACKEND_URL')
         payload = {
-            'first_name' : firstname,
-            'last_name' : lastname,
-            'email' : email,
-            'phone_number' : phone,
-            'chat_id' : str(chat_id),
-            'has_license' : False
+            'first_name': firstname,
+            'last_name': lastname,
+            'email': email,
+            'phone_number': phone,
+            'chat_id': str(chat_id),
+            'has_license': False
         }
         response = requests.post(backend_url, json=payload)
         logger.info("url: %s, payload: %s, response: %s",
@@ -83,7 +84,7 @@ async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         elif response.status_code == 400:
             await update.message.reply_text("Eksik bilgileriniz bulunmaktadır, lütfen tekrar başlayınız.")
         elif response.status_code == 409:
-            await update.message.reply_text("kullanıcını kaydınız bulunmaktadır, lütfen bizimle iletişime geçiniz (admin@umuttopalak.com).")
+            await update.message.reply_text("Kullanıcını kaydınız bulunmaktadır, lütfen bizimle iletişime geçiniz (admin@umuttopalak.com).")
         else:
             logger.error("Backend returned an error: %s", response)
             await update.message.reply_text("Bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.")
@@ -104,6 +105,20 @@ def run_flask():
     """Flask sunucusunu başlatır."""
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+
+def periodic_task():
+    """Her 1 dakikada bir çalışan görev."""
+    while True:
+        try:
+            url = os.environ.get("PERIODIC_TASK_URL")
+            admin_key = os.environ.get("ADMIN_KEY")
+            header = {"admin-key" : admin_key}
+            response = requests.get(url, headers=header)
+            logger.info(f"Periodic task sent a request to {url}. Response: {response.status_code}")
+        except Exception as e:
+            logger.error(f"Error in periodic task: {e}")
+        time.sleep(60)
 
 
 def main():
@@ -129,6 +144,9 @@ def main():
 
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
+
+    periodic_task_thread = threading.Thread(target=periodic_task)
+    periodic_task_thread.start()
 
     application.run_polling()
 
