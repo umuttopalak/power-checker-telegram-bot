@@ -118,7 +118,7 @@ def periodic_task():
             logger.info(f"Periodic task sent a request to {url}. Response: {response.status_code}")
         except Exception as e:
             logger.error(f"Error in periodic task: {e}")
-        time.sleep(60)
+        time.sleep(2700)
 
 
 def main():
