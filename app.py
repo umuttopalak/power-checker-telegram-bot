@@ -48,11 +48,12 @@ async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.message.chat_id
     context.user_data['chat_id'] = chat_id
 
+    logger.info(f"Sending user data to backend: {context.user_data}")
+
     firstname = context.user_data['firstname']
     lastname = context.user_data['lastname']
     email = context.user_data['email']
     phone = context.user_data['phone']
-
     try:
         backend_url = os.environ.get('BACKEND_URL')
         payload = {
@@ -63,10 +64,12 @@ async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             'chat_id': chat_id
         }
         response = requests.post(backend_url, json=payload)
+        logger.info("Backend response: %s", response.status_code)
 
         if response.status_code == 200:
             await update.message.reply_text("Bilgileriniz başarıyla kaydedildi. Kısa süre içinde sizinle iletişime geçeceğiz.")
         else:
+            logger.error("Backend returned an error: %s", response)
             await update.message.reply_text("Bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.")
     except Exception as e:
         logger.error(f"Error sending data to backend: {e}")
@@ -100,6 +103,8 @@ def main() -> None:
     )
 
     application.add_handler(conv_handler)
+    logger.info("Bot is running...")
+
     application.run_polling()
 
 
