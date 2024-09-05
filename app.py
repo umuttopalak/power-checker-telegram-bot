@@ -48,8 +48,6 @@ async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.message.chat_id
     context.user_data['chat_id'] = chat_id
 
-    logger.info(f"Sending user data to backend: {context.user_data}")
-
     firstname = context.user_data['firstname']
     lastname = context.user_data['lastname']
     email = context.user_data['email']
@@ -64,7 +62,7 @@ async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             'chat_id': chat_id
         }
         response = requests.post(backend_url, json=payload)
-        logger.info("Backend response: %s", response.status_code)
+        logger.info("url: %s, payload: %s, response: %s", backend_url, context.user_data, response)
 
         if response.status_code == 200:
             await update.message.reply_text("Bilgileriniz başarıyla kaydedildi. Kısa süre içinde sizinle iletişime geçeceğiz.")
