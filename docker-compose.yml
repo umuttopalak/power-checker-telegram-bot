@@ -4,10 +4,10 @@ services:
   bot:
     build: .
     environment:
-      - TOKEN=${TOKEN}
-      - BACKEND_URL=${BACKEND_URL}
-      - PERIODIC_TASK_URL=${PERIODIC_TASK_URL}
-      - ADMIN_KEY=${ADMIN_KEY}
+      - TOKEN
+      - BACKEND_URL
+      - PERIODIC_TASK_URL
+      - ADMIN_KEY
     restart: unless-stopped
     env_file:
       - .env
