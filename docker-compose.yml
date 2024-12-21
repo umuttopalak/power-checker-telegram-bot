@@ -9,8 +9,6 @@ services:
       - PERIODIC_TASK_URL
       - ADMIN_KEY
     restart: unless-stopped
-    env_file:
-      - .env
     volumes:
       - ./app.py:/app/app.py
       - ./requirements.txt:/app/requirements.txt
