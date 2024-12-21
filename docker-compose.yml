@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    environment:
+      - TOKEN=${TOKEN}
+      - BACKEND_URL=${BACKEND_URL}
+      - PERIODIC_TASK_URL=${PERIODIC_TASK_URL}
+      - ADMIN_KEY=${ADMIN_KEY}
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./app.py:/app/app.py
+      - ./requirements.txt:/app/requirements.txt
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep 'python app.py' | grep -v grep"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
