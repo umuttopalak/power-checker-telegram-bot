@@ -8,11 +8,6 @@ services:
       - BACKEND_URL
       - PERIODIC_TASK_URL
       - ADMIN_KEY
-    restart: unless-stopped
-    volumes:
-      - .:/app
-    healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep 'python app.py' | grep -v grep"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    restart: always
+    tty: true
+    stdin_open: true
