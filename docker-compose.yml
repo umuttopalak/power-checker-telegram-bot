@@ -10,8 +10,7 @@ services:
       - ADMIN_KEY
     restart: unless-stopped
     volumes:
-      - ./app.py:/app/app.py
-      - ./requirements.txt:/app/requirements.txt
+      - .:/app
     healthcheck:
       test: ["CMD-SHELL", "ps aux | grep 'python app.py' | grep -v grep"]
       interval: 30s
